@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Dashboard</title>
+	<link href="https://stackpath.bootstrapcdn.com/bootswatch/4.1.1/darkly/bootstrap.min.css" rel="stylesheet" integrity="sha384-ae362vOLHy2F1EfJtpMbNW0i9pNM1TP2l5O4VGYYiLJKsaejqVWibbP6BSf0UU5i" crossorigin="anonymous">
+    <meta http-equiv="refresh" content="600">
+  </head>
+  
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+
+        <!-- 左列 -->
+
+<div class="col">
+<div class="card">
+<%
+        require "date"
+	thisMonth=Date.today
+	weekday= %w[日 月 火 水 木 金 土]
+	week=weekday[thisMonth.wday]
+	year= "今日は#{thisMonth.year}年#{thisMonth.month}月#{thisMonth.day}日#{week}曜日"
+%>
+<h4 class=><font size="2"><%= year+"です"  %></font></h4>
+</div>
+
+
+
+
+	<div class="card">
+  <%
+    require 'uri'
+    require 'net/http'
+    require 'yaml'
+    data = Net::HTTP.get(URI.parse("https://rti-giken.jp/fhc/api/train_tetsudo/delay.json"))
+    json = YAML.load(data)
+    json = json.select { |item| item["name"] =~ /JR宝塚線|阪急宝塚線|京阪線|神戸線|大和路線|阪和線|大阪環状線|南海線|南海本線|JR東西線/ }
+    output_message = "遅延情報はありません"
+    output_class   = ""
+    if !json.empty?
+      output_message = json.map { |item| item["name"]+"が遅延しています" }.join("<br>")
+      output_class   = "text-white bg-danger"
+    end
+  %>
+  <h4 class="card-header <%= output_class %>">電車遅延情報</h4>
+  <div class="card-body">
+    <p class="card-text"><%= output_message %></p>
+ </div>
+</div>
+
+        
+	<p> 　</p>
+        <div class="card">
+            <h4 class="card-header">大阪の天気予報</h4>
+            <div class="card-body">
+              <%
+                # 天気予報取得処理
+                require 'uri'
+                require 'net/http'
+                require 'yaml'
+                proxy='http://wwwproxy.osakac.ac.jp'
+                data = Net::HTTP.get(URI.parse("http://weather.livedoor.com/forecast/webservice/json/v1?city=270000"))
+                json = YAML.load(data)
+
+                # 今日と明日の天気
+                today = json["forecasts"][0]["telop"]
+                tomorrow = json["forecasts"][1]["telop"]
+               %>
+              <p class="card-text">
+                <% json["forecasts"].each { |forecast| %>
+                  <strong><%= forecast["dateLabel"] %></strong>:
+                  <%= forecast["telop"] %>
+                  <% if forecast["temperature"]["min"] %>
+                    <span class="text-info">最低<%= forecast["temperature"]["min"]["celsius"] %>℃</span>
+                  <% end %>
+                  <% if forecast["temperature"]["max"] %>
+                    <span class="text-danger">最高<%= forecast["temperature"]["max"]["celsius"] %>℃</span>
+                  <% end %>
+                  <br>
+                <% } %>
+              </p>
+            </div>
+          </div>
+	</div>	
+	
+
+        <!-- 右列 -->
+
+	 <div class="col">
+<div class="card">
+		<%
+		 require 'uri'
+		 require 'net/http'
+		 require 'yaml'
+		 data=Net::HTTP.get(URI.parse("https://api.p2pquake.net/v1/human-readable"))
+		 json=YAML.load(data)
+
+		 json=json.select{|item| item["name"]}
+output_message = "地震情報はありません"
+    output_class   = ""
+    if !json.empty?
+      output_message = json.map { |item| item["name"]}.join("<br>")
+      output_class   = "text-white bg-danger"
+    end
+%>
+		
+            <h4 class="card-header">地震情報</h4>
+            <div class="card-body">
+              <p class="card-text"><%= output_message %></p>
+            </div>
+          </div>
+
+	<p>　　</p>
+	<div class="card">
+	<div class="card-header">お気を付けてお帰りください</div>
+	<div class="card-body">
+	<p class="card-text">TDS(TakelabDashboardSystem) Ver_1.2.4β</p>
+	</div>
+	
+
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
